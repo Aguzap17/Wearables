@@ -9,5 +9,6 @@ nav_order: 1
 Este portafolio contiene toda la documentacion y proceso de desarrollo de las ideas propuestas como proyecto interdisciplinario para crear un "Wearable" que resuelva o se enfoque en alguna ODS (Objetivos de Desarrollo Sostenible).
 
 Contenido:
-- [1. Ideas Propuestas](01-ideas-propuestas.md)
+- [1. Problematica y Concepto](01-Problematica_y_Concepto_de_Solucion.md)
+- [2. Preguntas de Investigacion](02-Preguntas_de_Investigacion_y_Entrevista.md)
 
