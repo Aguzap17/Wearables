@@ -11,4 +11,6 @@ Este portafolio contiene toda la documentacion y proceso de desarrollo de las id
 Contenido:
 - [1. Problematica y Concepto](01-Problematica_y_Concepto_de_Solucion.md)
 - [2. Preguntas de Investigacion](02-Preguntas_de_Investigacion_y_Entrevista.md)
+- [3. Estado del Arte](03-Estado_del_Arte.md)
+- [4. Entrevistas](04-Entrevistas.md)
 
