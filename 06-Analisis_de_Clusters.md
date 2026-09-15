@@ -68,3 +68,7 @@ Un **sistema vestible que sustituya al dolor como instrumento del paciente**, co
 **Criterios heredados de la investigación previa:** bajo costo y compra directa (sin aseguradora ni receta), cero configuración ("que se ponga y funcione"), cómodo y no invasivo, y con evidencia demostrable de utilidad ("ver el dato, no la promesa").
 
 > **Nota:** esta es una primera idea derivada de los clusters, no un producto definido. La forma concreta (prenda, accesorio, segmento corporal, mecánica de juego) se definirá en la fase de ideación y prototipado.
+
+Propuesta: Dispositivo vestible de rodilla para usuarios que cuentan con lesiones en ligamentos. Con el objetivo de generar y monitorear una rehabilitación activa en casa por medio de microsesiones con un enfoque hacia metas prácticas impuestas por un especialista.
+
+
