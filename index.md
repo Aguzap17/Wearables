@@ -15,4 +15,5 @@ Contenido:
 - [4. Estado del Arte](04-Estado_del_Arte.md)
 - [5. Entrevistas](05-Entrevistas.md)
 - [6. Analisis de Clusters](06-Analisis_de_Clusters.md)
+- [7. Cronograma](07-Cronograma.md)
 
