@@ -2,6 +2,7 @@
 layout: default
 title: Planteamiento del Problema
 nav_order: 4
+has_children: true
 ---
 
 
