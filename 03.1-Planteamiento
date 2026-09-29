@@ -1,6 +1,9 @@
+---
 layout: default
-title: Planteamiento del Problema
-nav_order: 4
+title: Planteamiento específico del Problema
+parent: "Planteamiento del Problema"
+nav_order: 1
+---
 
 # Planteamiento inicial del problema
 **Proyecto semestral — Tecnología vestible**
