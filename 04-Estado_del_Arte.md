@@ -2,20 +2,23 @@
 layout: default
 title: Estado del Arte
 nav_order: 5
+has_children: true
 ---
 
-# Estado del arte
+# Estado del arte inicial
 
 **Proyecto semestral — Tecnología vestible**
 
 *¿Cómo se está resolviendo actualmente el problema de la rehabilitación en casa sin supervisión?*
+
+> Esta página documenta la revisión general de soluciones. El estado del arte específico de la articulación de la rodilla, incluido el análisis técnico de la configuración de sensado elegida, se desarrolla en la subpágina [Estado del Arte específico]({% link 04.1-Estado_del_Arte.md %}).
 
 ---
 
 ## Tabla comparativa de soluciones existentes
 
 | Solución / producto | Usuario | ¿Qué resuelve? | ¿Cómo lo hace? | Ventajas | Limitaciones |
-| --- | --- | --- | --- | --- | --- |
+|---|---|---|---|---|---|
 | **A. Hoja impresa de ejercicios** (estándar de atención actual) | Cualquier paciente ambulatorio | Transmitir la prescripción del terapeuta al hogar | Diagramas e instrucciones en papel | Costo ~cero; universal; no requiere tecnología | Sin retroalimentación, sin motivación, sin registro; es el grupo control que toda la investigación busca vencer [5][10] |
 | **B. Video / app de ejercicios** (no vestible) | Paciente ambulatorio con smartphone | Claridad de la instrucción y confianza en la ejecución | Videos demostrativos de cada ejercicio en el teléfono | RCT: adherencia y confianza superiores a la hoja impresa; bajo costo [5] | No mide al paciente: muestra el ejercicio, pero no verifica la ejecución ni registra nada |
 | **C. Hinge Health** (plataforma digital, EE.UU.) | Empleados con cobertura de aseguradora/empleador | Supervisión y corrección sin ir a consulta | Visión por computadora que rastrea +100 puntos del cuerpo, mide ángulos articulares y corrige la forma en tiempo real; kit de sensores vestibles [7] | Corrección en tiempo real validada a gran escala; empresa pública (~$4.3 mil M USD) [7] | No se vende al paciente directo; acceso solo vía aseguradoras de EE.UU.; requiere colocarse frente a la cámara del teléfono |

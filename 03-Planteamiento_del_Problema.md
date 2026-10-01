@@ -2,12 +2,15 @@
 layout: default
 title: Planteamiento del Problema
 nav_order: 4
+has_children: true
 ---
-
 
 # Planteamiento inicial del problema
 
 **Proyecto semestral — Tecnología vestible**
+*Alcance: rehabilitación física ambulatoria en general*
+
+> Esta página documenta el planteamiento general del que partió el proyecto. La delimitación posterior a la articulación de la rodilla se desarrolla en la subpágina [Planteamiento específico del Problema]({% link 03.1-Planteamiento.md %}).
 
 ---
 
@@ -19,7 +22,7 @@ En entrevistas a profundidad con pacientes, los ejercicios en casa se describen 
 
 ## ¿A quién afecta?
 
-A cualquier persona con prescripción de rehabilitación ambulatoria (musculoesquelética, post-quirúrgica, post-fractura o neurológica). Este proyecto delimita  foco en **personas de 35 a 60 años, económicamente activas y con responsabilidades familiares**: el segmento donde el ejercicio terapéutico compite contra el trabajo y la familia —y pierde—, pues la dificultad de integrarlo a la vida diaria y la falta de tiempo son las barreras psicológicas y ambientales dominantes documentadas [1][2]. En encuestas a fisioterapeutas, el 75% reporta que sus pacientes citan falta de tiempo como razón de incumplimiento [3].
+A cualquier persona con prescripción de rehabilitación ambulatoria (musculoesquelética, post-quirúrgica, post-fractura o neurológica). Este proyecto delimita el foco en **personas de 35 a 60 años, económicamente activas y con responsabilidades familiares**: el segmento donde el ejercicio terapéutico compite contra el trabajo y la familia —y pierde—, pues la dificultad de integrarlo a la vida diaria y la falta de tiempo son las barreras psicológicas y ambientales dominantes documentadas [1][2]. En encuestas a fisioterapeutas, el 75% reporta que sus pacientes citan falta de tiempo como razón de incumplimiento [3].
 
 ## ¿Dónde y cuándo ocurre?
 
