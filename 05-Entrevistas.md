@@ -3,7 +3,7 @@ layout: default
 title: Entrevistas
 nav_order: 6
 ---
-# Rehabilitar no es difícil. Sostenerla fuera del consultorio, sí
+# La rehabilitación no es difícil. Sostenerla fuera del consultorio, sí
 
 **Investigación de usuarios · Hallazgos iniciales**
 
