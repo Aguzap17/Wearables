@@ -10,6 +10,7 @@ nav_order: 8
 | :--- | :--- | :--- |
 | **22 sep.** | Cronograma del proyecto, primer boceto del wearable de rodilla | Daniela, Fernanda y Agustín |
 | **29 sep.** | Actualizar planteamiento del problema y estado del arte enfocado en rehabilitación de rodilla | Fernanda |
+| **8 oct.** | Primer prueba de concepto (Hardware armado) | |
 | **15 oct.** | Documentar segunda entrega/prototipo: cambios, pruebas y decisiones del equipo | Agustín |
 | **20 oct.** | Actualización WEB 3: avances del diseño, parte técnica y electrónica/sensores | Daniela |
 | **29 oct.** | Documentar tercera entrega de prototipo: qué funcionó, qué no y qué se modificó | Fernanda |
