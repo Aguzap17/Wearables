@@ -16,4 +16,4 @@ Contenido:
 - [5. Entrevistas](05-Entrevistas.md)
 - [6. Analisis de Clusters](06-Analisis_de_Clusters.md)
 - [7. Cronograma](07-Cronograma.md)
-
+- [8. Arquitectura](08-Arquitectura_Tecnica.md)
