@@ -8,193 +8,135 @@ nav_order: 9
 
 **Proyecto semestral — Wearables** · Rodillera sensorizada para rehabilitación
 
-Este documento describe la ingeniería del prototipo: sensores, microcontrolador, alimentación, interconexión, integración física y el formato de medición.
-
 ---
 
-## 1. Visión general del sistema
+## 1. ¿Cómo funciona el sistema?
 
-El sistema mide el **ángulo de flexión-extensión de la rodilla** en tiempo real con dos unidades inerciales (una en el muslo y una en la espinilla) montadas sobre una rodillera de compresión comercial. Un microcontrolador con WiFi/BLE procesa las lecturas, calcula el ángulo articular y lo transmite para visualización, retroalimentación y registro.
+El sistema mide el **ángulo de flexión de la rodilla** en tiempo real. Para lograrlo usa dos sensores de movimiento (IMU): uno en el muslo y uno en la espinilla, montados sobre una rodillera de compresión comercial. Cada sensor reporta la inclinación de su segmento de pierna; **la diferencia entre las dos inclinaciones es el ángulo de la rodilla.**
+
+Un microcontrolador lee ambos sensores, calcula el ángulo y lo envía a una interfaz web donde se grafica en vivo, se cuentan repeticiones y se registra el progreso.
 
 ```
  [IMU 1 · muslo] ──┐
-                   ├── bus I2C ──> [XIAO ESP32-S3] ──> Serial USB / WiFi ──> Interfaz web
- [IMU 2 · espinilla]┘                    │
-                                         ├── [Motor de vibración] (feedback háptico)
-                                         └── [LiPo 3.7 V + switch + divisor de medición]
+                   ├── bus I2C ──> [Microcontrolador] ──> USB / WiFi ──> Interfaz web
+ [IMU 2 · espinilla]┘                     │
+                                   [Batería LiPo + switch]
 ```
 
 | Bloque | Componente | Función |
 | --- | --- | --- |
-| Sensado | 2 × MPU6050 (breakout GY-521) | Acelerómetro + giroscopio de 6 ejes por segmento de la pierna |
-| Procesamiento | Seeed XIAO ESP32-S3 | Lectura I2C, cálculo de ángulo, comunicación |
-| Alimentación | LiPo 3.7 V protegida + switch SS-12D | Operación autónoma vestible |
-| Retroalimentación | Módulo de vibración (motor de moneda con driver PWM) | Aviso háptico sin mirar pantalla |
-| Interfaz | Página web (Serial / WebSocket) | Gráficas en vivo, conteo de repeticiones, registro |
+| Sensado | 2 × MPU6050 (GY-521) | Miden la inclinación de muslo y espinilla |
+| Procesamiento | Seeed XIAO ESP32-S3 | Lee los sensores, calcula el ángulo y lo transmite |
+| Alimentación | LiPo 3.7 V + switch | Permite usarlo sin cables, todo el día |
+| Interfaz | Página web | Gráfica en vivo, repeticiones y registro de sesiones |
 
 ---
 
-## 2. Sensores: unidades inerciales (IMU)
+## 2. Sensores (IMU)
 
-**Componente:** MPU6050 en breakout GY-521 — acelerómetro de 3 ejes + giroscopio de 3 ejes (6 DoF), interfaz I2C.
+Cada **MPU6050** es una unidad inercial de 6 ejes: acelerómetro (detecta hacia dónde apunta la gravedad, es decir, la inclinación) + giroscopio (detecta qué tan rápido gira). Se comunican por el protocolo **I2C**.
 
-**Configuración de operación:**
+**¿Cómo conviven dos sensores iguales en los mismos cables?** I2C es un bus: todos los dispositivos comparten las mismas dos líneas de datos y cada uno tiene una dirección, como un nombre. La MPU6050 permite elegir entre dos nombres con su pin **AD0**:
 
-| Parámetro | Valor | Razón |
-| --- | --- | --- |
-| Rango de acelerómetro | ±4 g | Movimiento humano; mejor resolución que ±8/±16 g |
-| Rango de giroscopio | ±500 °/s | Suficiente para velocidades articulares de rehabilitación |
-| Filtro pasa-bajas (DLPF) | 21 Hz | Atenúa vibración y ruido muscular |
-| Frecuencia de muestreo del sistema | ~20 Hz | Sobrada para movimiento articular; ligera para transmitir |
+- IMU 1 (muslo): AD0 a GND → dirección **0x68**
+- IMU 2 (espinilla): AD0 a 3V3 → dirección **0x69**
 
-**Direccionamiento (dos sensores en un mismo bus):** la MPU6050 fija 6 de los 7 bits de su dirección I2C de fábrica; el séptimo lo define el voltaje del pin **AD0**:
-
-- IMU 1 (muslo): AD0 → GND ⇒ dirección **0x68**
-- IMU 2 (espinilla): AD0 → 3V3 ⇒ dirección **0x69**
-
-Así ambas comparten las mismas cuatro líneas (bus) y el microcontrolador las interroga por nombre, sin conflicto. Las resistencias pull-up de SDA/SCL vienen integradas en cada breakout.
+Así el microcontrolador pregunta por nombre y cada sensor responde solo cuando le toca.
 
 ---
 
 ## 3. Microcontrolador
 
-**Componente:** Seeed Studio **XIAO ESP32-S3** — ESP32-S3 de doble núcleo a 240 MHz, WiFi 2.4 GHz + BLE, 21 × 17 mm.
+**Seeed Studio XIAO ESP32-S3** (21 × 17 mm, del tamaño de una moneda). Se eligió por tres razones:
 
-**Razones de la elección:**
+1. **Tamaño**: cabe en una rodillera sin estorbar.
+2. **Conectividad integrada**: WiFi y Bluetooth para hablar con la interfaz web sin cables.
+3. **Cargador de batería incluido**: la LiPo se carga con el mismo cable USB-C con el que se programa, sin circuitos extra.
 
-- **Tamaño**: formato XIAO (del tamaño de una moneda) apto para vestible.
-- **Conectividad integrada**: WiFi para la interfaz web (WebSocket) y BLE como opción futura.
-- **Gestión de batería a bordo**: cargador LiPo integrado — se carga por el mismo USB-C que programa la placa, sin módulos externos.
-- **Periféricos suficientes**: I2C por hardware, ADC para medición de batería, PWM para el motor háptico.
+**Conexiones:**
 
-**Asignación de pines:**
+| Pin del XIAO | Va a |
+| --- | --- |
+| GPIO5 (SDA) y GPIO6 (SCL) | Bus I2C → las dos IMUs |
+| GPIO1 (A0) | Medidor de nivel de batería |
+| Pads BAT+ / BAT− | Batería (el positivo pasa por el switch) |
+| 3V3 y GND | Alimentación de los sensores |
 
-| Pin | Señal | Conecta a |
-| --- | --- | --- |
-| GPIO5 (D4) | SDA | Bus I2C → ambas IMUs |
-| GPIO6 (D5) | SCL | Bus I2C → ambas IMUs |
-| GPIO1 (A0) | ADC | Nodo central del divisor de batería |
-| GPIO digital c/PWM | Señal | Módulo de vibración |
-| Pads BAT+ / BAT− | Alimentación | LiPo (BAT+ a través del switch) |
-| 3V3 / GND | Riel regulado | IMUs, módulo de vibración, AD0 de IMU 2 |
+*Para las pruebas de desarrollo se usa un ESP32-S3 DevKit (mismo chip, formato grande); la versión vestible usa el XIAO.*
 
 ---
 
 ## 4. Alimentación
 
-### 4.1 Batería
-
-**LiPo de 1 celda, 3.7 V nominal (4.2 V a plena carga), con circuito de protección (PCM) integrado** y conector JST. El PCM protege contra sobredescarga y cortocircuito — requisito para un dispositivo en contacto con el cuerpo.
-
-La carga la realiza el circuito integrado del XIAO (~100 mA): basta conectar el USB-C. La placa conmuta automáticamente entre USB y batería sin intervención.
-
-### 4.2 Interruptor de encendido
-
-Un **switch deslizable SS-12D (SPDT)** en serie con el positivo de la batería: LiPo(+) → pin común → pin extremo → pad BAT+ del XIAO. El negativo va directo. Con el switch apagado se desconecta absolutamente todo (incluido el divisor de medición): consumo en apagado = 0.
-
-### 4.3 Medición del nivel de batería
-
-El voltaje de la LiPo (3.3–4.2 V) excede el rango del ADC, por lo que se lee a través de un **divisor resistivo de 2 × 220 kΩ** colocado *después* del switch:
-
-```
-V_BAT (tras switch) ──[220 kΩ]──●──[220 kΩ]── GND
-                                │
-                            A0 (ADC)
-```
-
-- El nodo central entrega **V_BAT / 2** (1.65–2.1 V), dentro del rango seguro del pin.
-- El valor alto de las resistencias limita el drenaje a ~9 µA.
-- En firmware se lee con `analogReadMilliVolts()` (usa la calibración de fábrica del ADC) promediando 16 muestras, se multiplica ×2 y se mapea linealmente: 4.2 V = 100 %, 3.3 V = 0 %.
-
-### 4.4 Estrategia de consumo (diseño para uso diario)
-
-El WiFi es el gran consumidor, así que el firmware opera en dos modos:
-
-- **Modo día**: radio apagado; el microcontrolador duerme y la interrupción de movimiento de la IMU lo despierta para registrar actividad (pasos, flexión de marcha) a baja frecuencia, guardando resúmenes en memoria flash.
-- **Modo sesión**: durante los 10–15 min de ejercicios se enciende el WiFi, hay streaming en vivo a la interfaz y retroalimentación en tiempo real; al terminar se sincroniza y vuelve a dormir.
+- **Batería:** LiPo de 3.7 V con circuito de protección integrado — requisito para un dispositivo que va pegado al cuerpo. Se carga conectando el USB-C; la placa cambia sola entre USB y batería.
+- **Apagador:** un switch deslizable en serie con el positivo de la batería. Apagado = consumo cero.
+- **Medidor de batería:** el voltaje de la LiPo (hasta 4.2 V) es mayor de lo que el microcontrolador puede leer, así que se divide a la mitad con **dos resistencias iguales de 220 kΩ** y esa mitad se lee en el pin A0. En software se multiplica por dos y se convierte a porcentaje (4.2 V = 100 %, 3.3 V = 0 %).
+- **Autonomía:** el WiFi solo se enciende durante la sesión de ejercicios (10–15 min); el resto del día el sistema duerme y solo registra actividad básica. Así la batería aguanta la jornada completa.
 
 ---
 
-## 5. Interconexión y cableado
+## 5. Cableado e integración física
 
-- **Topología:** bus I2C compartido — cuatro líneas (3V3, GND, SDA, SCL) desde el microcontrolador hacia ambas IMUs, a 100 kHz.
-- **Cable:** multifilar de silicona 28–30 AWG (flexible, resistente a fatiga). *Nunca* alambre sólido en tramos que se flexionan.
-- **Pares trenzados:** cada señal viaja trenzada con una tierra (SDA+GND, SCL+GND, VCC+GND) para inmunidad al ruido. Las dos señales nunca se trenzan entre sí.
-- **Uniones:** soldadas, con termorretráctil individual por conductor más un tubo general como alivio de tensión en cada salida de placa, y anclajes de adhesivo termofusible donde el cable sale de las soldaduras (las uniones no soportan esfuerzo mecánico directamente).
-- **Montaje actual:** placa perforada como placa madre del prototipo (XIAO, switch, divisor y puntos de distribución del bus). Evolución prevista: PCB portadora de una cara fresada, con el XIAO montado plano por sus castellations.
+**Cableado:**
+- Cable **multifilar de silicona** (28–30 AWG): flexible y resistente a la fatiga — en un dispositivo que se dobla miles de veces al día, el alambre rígido se rompe.
+- Cada señal viaja **trenzada con una tierra** para protegerla del ruido.
+- Uniones soldadas con termorretráctil y punto de silicón como refuerzo, para que los jalones los absorba el refuerzo y no la soldadura.
 
----
-
-## 6. Integración física en la rodillera
-
-- **Base:** rodillera de compresión comercial tipo manga — aporta el acoplamiento firme sensor-cuerpo y la función de soporte ya validada del producto base.
-- **Ubicación de módulos (cara lateral externa, evitando corva, rótula y cara interna):**
-  - **Módulo principal** (XIAO + LiPo + switch): parte alta del muslo, zona plana que no se flexiona.
-  - **IMU 1:** cara externa del muslo, 8–10 cm sobre la rodilla.
-  - **IMU 2:** cara externa de la espinilla, 8–10 cm bajo la rodilla.
-- **Sujeción:** bolsillos de tela elástica/neopreno cosidos con solapa de velcro — los módulos se extraen en minutos para lavar la prenda.
-- **Ruteo del cable:** canales de tela; el único tramo que cruza la articulación baja por el costado con una **curva de holgura en "S"**, de modo que la flexión estira la holgura y no el cobre.
-- El ángulo se obtiene por **diferencia entre las dos IMUs**, lo que hace la medición robusta a la orientación global de la pierna (de pie, sentado, acostado).
+**Montaje en la rodillera** (todo en la cara lateral externa de la pierna, evitando la corva y la rótula):
+- **Módulo principal** (XIAO + batería + switch): parte alta del muslo, zona que no se flexiona.
+- **IMU 1:** cara externa del muslo, 8–10 cm arriba de la rodilla.
+- **IMU 2:** cara externa de la espinilla, 8–10 cm abajo.
+- Los módulos van en **bolsillos con velcro**: se sacan en minutos para lavar la rodillera.
+- El único cable que cruza la rodilla baja por el costado con una **curva de holgura en "S"**: al flexionar se estira la holgura, no el cobre.
 
 ---
 
-## 7. Formato de medición
+## 6. Formato de medición
 
-### 7.1 Principio de medición
-
-Cada IMU estima la **inclinación (pitch) de su segmento en el plano sagital** combinando acelerómetro y giroscopio. El ángulo de rodilla es la diferencia entre segmentos:
+**Principio:** el acelerómetro de cada IMU detecta hacia dónde apunta la gravedad, y de ahí se calcula la inclinación de su segmento. El ángulo de rodilla es la resta:
 
 ```
-θ_rodilla = pitch_muslo − pitch_espinilla
+ángulo de rodilla = inclinación del muslo − inclinación de la espinilla
 ```
 
-- **Del acelerómetro:** `pitch = atan2(ax, √(ay² + az²))` — estable en reposo, ruidoso en movimiento.
-- **Del giroscopio:** integración de velocidad angular — suave en movimiento, deriva en el tiempo.
-- **Fusión (filtro complementario):** `ángulo = α·(ángulo + ω·dt) + (1−α)·ángulo_accel`, con α ≈ 0.96–0.98 — toma lo mejor de ambos. (Versión actual del prototipo: solo acelerómetro; el filtro es la siguiente iteración.)
+Esto hace la medición independiente de la postura global: funciona igual de pie, sentado o acostado, porque lo que importa es el ángulo *entre* los dos segmentos.
 
-### 7.2 Calibración
+**Calibración:** al iniciar, el usuario extiende la pierna y presiona "Calibrar": esa posición se registra como **0°**. Con eso se absorben las pequeñas diferencias de montaje de los sensores.
 
-Al iniciar sesión, el usuario se coloca de pie con la **pierna extendida** y el sistema registra ese estado como **0°** (offset restado a todas las lecturas siguientes). Esto absorbe tolerancias de montaje y de fábrica de los sensores.
-
-### 7.3 Formato de datos
-
-Cadenas de texto a ~20 Hz, legibles tanto por el Serial Plotter como por la interfaz web:
+**Datos:** el sistema envía ~20 mediciones por segundo en texto simple:
 
 ```
 muslo:12.4,espinilla:-78.9,rodilla:91.3
 ```
 
-| Campo | Unidad | Descripción |
-| --- | --- | --- |
-| `muslo` | grados (°) | Pitch del segmento femoral |
-| `espinilla` | grados (°) | Pitch del segmento tibial |
-| `rodilla` | grados (°) | Ángulo articular (0° = pierna extendida; positivo = flexión) |
+| Campo | Significado |
+| --- | --- |
+| `muslo` | Inclinación del muslo (grados) |
+| `espinilla` | Inclinación de la espinilla (grados) |
+| `rodilla` | Ángulo de la rodilla: 0° = pierna extendida, positivo = flexión |
 
-Sobre esta señal se calculan las métricas de los ejercicios: **repeticiones** (cruces de umbral con histéresis), **flexión máxima por sesión**, **tiempo de sostén**, **velocidad del movimiento** y el **test de sentarse-pararse de 30 s** (estándar clínico).
+**Sobre esa señal se calculan las métricas de los ejercicios:** repeticiones, flexión máxima de la sesión, tiempo de sostén y el test de sentarse-pararse de 30 segundos (una prueba clínica estándar).
 
-### 7.4 Canal de comunicación
+**Comunicación por fases:**
 
-| Fase | Canal | Uso |
-| --- | --- | --- |
-| 1 (actual) | USB Serial → Web Serial API | Desarrollo y validación; la página web lee el puerto directamente en el navegador |
-| 2 | WiFi + WebSocket | Operación inalámbrica: el ESP32 sirve los datos y la misma interfaz web se conecta a él |
-| Futuro | BLE | Opción de app móvil nativa / bajo consumo |
+| Fase | Canal |
+| --- | --- |
+| 1 (actual) | Cable USB → la página web lee el puerto directamente (Web Serial) |
+| 2 | WiFi: el microcontrolador transmite y la misma página se conecta sin cable |
 
-### 7.5 Validación prevista
-
-Comparación del ángulo del sistema contra **goniómetro clínico** en posiciones estáticas (0°–120°), reportando el error medio. Objetivo: error ≤ ±5°, suficiente para retroalimentación de ejercicio terapéutico (no pretende grado de instrumento de diagnóstico).
+**Validación:** el ángulo del sistema se comparará contra un **goniómetro clínico** (el instrumento con el que los fisioterapeutas miden ángulos), con objetivo de error menor a ±5° — suficiente para guiar ejercicio; el dispositivo no pretende ser instrumento de diagnóstico.
 
 ---
 
-## 8. Resumen de especificaciones del prototipo
+## 7. Especificaciones del prototipo
 
 | Especificación | Valor |
 | --- | --- |
 | Magnitud medida | Ángulo de flexión-extensión de rodilla |
-| Sensores | 2 × IMU 6-DoF (MPU6050) en bus I2C |
-| Procesador | ESP32-S3 doble núcleo, WiFi/BLE |
+| Sensores | 2 × IMU MPU6050 en bus I2C |
+| Procesador | ESP32-S3 (WiFi + Bluetooth) |
 | Frecuencia de medición | ~20 Hz |
 | Alimentación | LiPo 3.7 V protegida, carga por USB-C |
-| Retroalimentación | Háptica (vibración) + interfaz web en vivo |
+| Interfaz | Página web con gráfica en vivo y conteo de repeticiones |
 | Forma | Rodillera de compresión con módulos removibles |
-| Costo de componentes electrónicos | < $600 MXN |
+| Costo de electrónica | < $600 MXN |
